@@ -106,6 +106,8 @@ parameter:
 ******************************************************************************/
 static void EPD_SendCommand(UBYTE Reg)
 {
+    if( Reg != 0x71 ) printf("CMND: 0x%02X\n", Reg);
+
     DEV_Digital_Write(EPD_DC_PIN, 0);
     DEV_Digital_Write(EPD_CS_PIN, 0);
     DEV_SPI_WriteByte(Reg);
@@ -117,8 +119,11 @@ function :	send data
 parameter:
     Data : Write data
 ******************************************************************************/
-static void EPD_SendData(UBYTE Data)
+
+static void EPD_SendData(UBYTE Data,bool debug=false)
 {
+    if (debug) printf("DATA: 0x%02X\n", Data);
+
     DEV_Digital_Write(EPD_DC_PIN, 1);
     DEV_Digital_Write(EPD_CS_PIN, 0);
     DEV_SPI_WriteByte(Data);
@@ -147,25 +152,29 @@ static void EPD_7IN5_V2_LUT(UBYTE* lut_vcom,  UBYTE* lut_ww, UBYTE* lut_bw, UBYT
 {
 	UBYTE count;
 
+    printf("**** BEGIN LUT ****\n");
+
 	EPD_SendCommand(0x20); //VCOM	
 	for(count=0; count<60; count++)
-		EPD_SendData(lut_vcom[count]);
+		EPD_SendData(lut_vcom[count],true);
 
 	EPD_SendCommand(0x21); //LUTBW
 	for(count=0; count<60; count++)
-		EPD_SendData(lut_ww[count]);
+		EPD_SendData(lut_ww[count],true);
 
 	EPD_SendCommand(0x22); //LUTBW
 	for(count=0; count<60; count++)
-		EPD_SendData(lut_bw[count]);
+		EPD_SendData(lut_bw[count],true);
 
 	EPD_SendCommand(0x23); //LUTWB
 	for(count=0; count<60; count++)
-		EPD_SendData(lut_wb[count]);
+		EPD_SendData(lut_wb[count],true);
 
 	EPD_SendCommand(0x24); //LUTBB
 	for(count=0; count<60; count++)
-		EPD_SendData(lut_bb[count]);
+		EPD_SendData(lut_bb[count],true);
+
+    printf("**** END LUT ****\n");
 }
 
 /******************************************************************************
@@ -187,6 +196,8 @@ UBYTE EPD_7IN5_V2_Init(void)
 {
     EPD_Reset();
 
+    printf("**** BEGIN INIT ****\n");
+
     // EPD_SendCommand(0x01);			//POWER SETTING
     // EPD_SendData(0x07);
     // EPD_SendData(0x07);    //VGH=20V,VGL=-20V
@@ -194,51 +205,53 @@ UBYTE EPD_7IN5_V2_Init(void)
     // EPD_SendData(0x3f);		//VDL=-15V
 
 	EPD_SendCommand(0x01);  // power setting
-	EPD_SendData(0x17);  // 1-0=11: internal power
-	EPD_SendData(*(Voltage_Frame_7IN5_V2+6));  // VGH&VGL
-	EPD_SendData(*(Voltage_Frame_7IN5_V2+1));  // VSH
-	EPD_SendData(*(Voltage_Frame_7IN5_V2+2));  //  VSL
-	EPD_SendData(*(Voltage_Frame_7IN5_V2+3));  //  VSHR
+	EPD_SendData(0x17,true);  // 1-0=11: internal power
+	EPD_SendData(*(Voltage_Frame_7IN5_V2+6),true);  // VGH&VGL
+	EPD_SendData(*(Voltage_Frame_7IN5_V2+1),true);  // VSH
+	EPD_SendData(*(Voltage_Frame_7IN5_V2+2),true);  //  VSL
+	EPD_SendData(*(Voltage_Frame_7IN5_V2+3),true);  //  VSHR
 	
 	EPD_SendCommand(0x82);  // VCOM DC Setting
-	EPD_SendData(*(Voltage_Frame_7IN5_V2+4));  // VCOM
+	EPD_SendData(*(Voltage_Frame_7IN5_V2+4),true);  // VCOM
 
 	EPD_SendCommand(0x06);  // Booster Setting
-	EPD_SendData(0x27);
-	EPD_SendData(0x27);
-	EPD_SendData(0x2F);
-	EPD_SendData(0x17);
+	EPD_SendData(0x27,true);
+	EPD_SendData(0x27,true);
+	EPD_SendData(0x2F,true);
+	EPD_SendData(0x17,true);
 
     EPD_SendCommand(0x04); //POWER ON
     DEV_Delay_ms(100);
     EPD_WaitUntilIdle();
 
     EPD_SendCommand(0X00);			//PANNEL SETTING
-    EPD_SendData(0x3F);   //KW-3f   KWR-2F	BWROTP 0f	BWOTP 1f
+    EPD_SendData(0x3F,true);   //KW-3f   KWR-2F	BWROTP 0f	BWOTP 1f
 
     EPD_SendCommand(0x61);        	//tres
-    EPD_SendData(0x03);		//source 800
-    EPD_SendData(0x20);
-    EPD_SendData(0x01);		//gate 480
-    EPD_SendData(0xE0);
+    EPD_SendData(0x03,true);		//source 800
+    EPD_SendData(0x20,true);
+    EPD_SendData(0x01,true);		//gate 480
+    EPD_SendData(0xE0,true);
 
     EPD_SendCommand(0X15);
-    EPD_SendData(0x00);
+    EPD_SendData(0x00,true);
 
     EPD_SendCommand(0X50);			//VCOM AND DATA INTERVAL SETTING
-    EPD_SendData(0x10);
-    EPD_SendData(0x00);
+    EPD_SendData(0x10,true);
+    EPD_SendData(0x00,true);
 
     EPD_SendCommand(0X60);			//TCON SETTING
-    EPD_SendData(0x22);
+    EPD_SendData(0x22,true);
 
     EPD_SendCommand(0x65);  // Resolution setting
-    EPD_SendData(0x00);
-    EPD_SendData(0x00);//800*480
-    EPD_SendData(0x00);
-    EPD_SendData(0x00);
+    EPD_SendData(0x00,true);
+    EPD_SendData(0x00,true);//800*480
+    EPD_SendData(0x00,true);
+    EPD_SendData(0x00,true);
 
-	EPD_7IN5_V2_LUT(LUT_VCOM_7IN5_V2, LUT_WW_7IN5_V2, LUT_BW_7IN5_V2, LUT_WB_7IN5_V2, LUT_BB_7IN5_V2);
+    EPD_7IN5_V2_LUT(LUT_VCOM_7IN5_V2, LUT_WW_7IN5_V2, LUT_BW_7IN5_V2, LUT_WB_7IN5_V2, LUT_BB_7IN5_V2);
+
+    printf("**** END INIT ****\n");
 
     return 0;
 }
